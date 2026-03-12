@@ -1,0 +1,1 @@
+nav.hash.activated = true;
