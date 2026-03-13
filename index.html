@@ -2,28 +2,43 @@
 <html lang="el">
 <head>
     <meta charset="UTF-8">
+    <!-- ΚΛΕΙΔΩΜΑ ZOOM: Απαγορεύει στον χρήστη να κάνει scale με τα δάχτυλα ή διπλό κλικ -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Vertical AI Project</title>
     <style>
-        /* Κλείδωμα οθόνης */
+        /* ΠΛΗΡΕΣ ΚΛΕΙΔΩΜΑ ΚΙΝΗΣΗΣ */
         html, body {
-            margin: 0; padding: 0; width: 100%; height: 100%;
-            overflow: hidden !important; position: fixed;
-            background: #000; display: flex;
-            justify-content: center; align-items: center;
-            touch-action: none;
+            margin: 0; 
+            padding: 0; 
+            width: 100%; 
+            height: 100%;
+            overflow: hidden !important; 
+            position: fixed; /* Κλειδώνει τη σελίδα στη θέση της */
+            background: #000; 
+            display: flex;
+            justify-content: center; 
+            align-items: center;
+            
+            /* ΑΠΕΝΕΡΓΟΠΟΙΗΣΗ GESTURES (Κινητά & Mac) */
+            touch-action: none; /* Σταματάει το swipe και το double-tap zoom */
+            -ms-touch-action: none;
+            overscroll-behavior: none; /* Σταματάει το "λαστιχένιο" εφέ */
+            -webkit-user-select: none; /* Απαγόρευση επιλογής κειμένου */
+            user-select: none;
         }
 
-        /* Container για κάθετο προσανατολισμό */
         #page-wrapper {
             position: relative;
-            width: 1080px; /* Κάθετο πλάτος */
-            height: 1920px; /* Κάθετο ύψος */
+            width: 1080px; 
+            height: 1920px; 
             transform-origin: center center;
             display: flex;
             justify-content: center;
             align-items: center;
             background: #fff;
+            overflow: hidden;
+            /* Διασφαλίζει ότι το iframe δεν θα δεχτεί gestures που επηρεάζουν τον browser */
+            touch-action: none;
         }
 
         #contentIFrame {
@@ -31,24 +46,8 @@
             height: 1920px !important;
             border: none;
             display: block;
+            pointer-events: auto; /* Επιτρέπει μόνο τα κλικ μέσα στο περιεχόμενο */
         }
-
-        /* Κουμπιά πλοήγησης στο κάτω μέρος για ευκολία σε κάθετο σχεδιασμό */
-        .nav-btn {
-            position: fixed;
-            bottom: 20px; /* Τα μεταφέραμε κάτω για να μην κρύβουν το περιεχόμενο */
-            background: rgba(0,0,0,0.7);
-            color: white;
-            padding: 15px 25px;
-            cursor: pointer;
-            z-index: 99999;
-            font-size: 30px;
-            border-radius: 50px;
-            user-select: none;
-            border: 1px solid rgba(255,255,255,0.3);
-        }
-        .prev { left: 20px; }
-        .next { right: 20px; }
 
         #dummyIFrame { display: none; }
     </style>
@@ -62,34 +61,45 @@
         </iframe>
     </div>
 
-    <div class="nav-btn prev" onclick="showPreviousPage()">❮</div>
-    <div class="nav-btn next" onclick="showNextPage()">❯</div>
+    <iframe id="dummyIFrame" class="dummyFrameClass"></iframe>
 
     <script>
         function applyVerticalScale() {
             const wrapper = document.getElementById('page-wrapper');
-            // Ορίζουμε τις κάθετες διαστάσεις στόχο
             const targetW = 1080;
             const targetH = 1920;
-            
             const screenW = window.innerWidth;
             const screenH = window.innerHeight;
-            
-            // Υπολογισμός κλίμακας: Πρέπει να χωράει και στα δύο, 
-            // αλλά κυρίως στο ύψος (Height) για κάθετες σελίδες.
             const scale = Math.min(screenW / targetW, screenH / targetH);
-            
             wrapper.style.transform = `scale(${scale})`;
         }
 
         window.addEventListener('resize', applyVerticalScale);
         window.addEventListener('load', applyVerticalScale);
-        // Διπλή εκτέλεση για σιγουριά στα κινητά
         applyVerticalScale();
         setTimeout(applyVerticalScale, 300);
 
-        // Απαγόρευση scroll και gestures
-        document.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+        // 1. ΑΠΑΓΟΡΕΥΣΗ SWIPE & SCROLL (Κινητά)
+        document.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+        }, { passive: false });
+
+        // 2. ΑΠΑΓΟΡΕΥΣΗ DOUBLE-TAP ZOOM (iOS fix)
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(e) {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                e.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+
+        // 3. ΑΠΑΓΟΡΕΥΣΗ ΡΟΔΕΛΑΣ & ΠΛΗΚΤΡΟΛΟΓΙΟΥ (PC/Mac)
+        window.addEventListener('wheel', e => e.preventDefault(), { passive: false });
+        window.addEventListener('keydown', function(e) {
+            const keys = [32, 37, 38, 39, 40]; // Space, βελάκια
+            if (keys.includes(e.keyCode)) e.preventDefault();
+        }, false);
     </script>
 </body>
 </html>
