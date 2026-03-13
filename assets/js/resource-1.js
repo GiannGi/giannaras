@@ -1,1 +1,0 @@
-$(function(){    $('[name="back_btn"]').on(clickEv, function() {        nav.to(nav.previousPageIndex + 1);    });});
